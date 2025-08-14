@@ -1,41 +1,41 @@
-import heapq
+from collections import deque
 
 class WFQQueue:
     def __init__(self):
-        self.queue = []
-        self.virtual_time = 0.0
-        self.last_finish_time = {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0}
-        # 💡 Nuevo: Agregamos un contador para desempatar paquetes
-        self.counter = 0
+        self.queues = {
+            0: deque(),  # Alta prioridad
+            1: deque(),
+            2: deque(),
+            3: deque()   # Baja prioridad
+        }
+        self.weights = {
+            0: 4,
+            1: 3,
+            2: 2,
+            3: 1
+        }
+        self.order = [0, 1, 2, 3]  # Orden de prioridades
 
     def enqueue(self, packet):
-        weights = {0: 4, 1: 3, 2: 2, 3: 1}
-        peso = weights.get(packet['prioridad'], 1)
-
-        start_time = max(self.virtual_time, self.last_finish_time[packet['prioridad']])
-        finish_time = start_time + (1 / peso)
-
-        packet['start_time'] = start_time
-        packet['finish_time'] = finish_time
-        packet['peso'] = peso
-
-        self.last_finish_time[packet['prioridad']] = finish_time
-
-        # 💡 La corrección: Encolamos una tupla de 3 elementos:
-        # (finish_time, contador, packet)
-        # heapq usará 'finish_time' para ordenar y 'counter' para desempatar si son iguales
-        heapq.heappush(self.queue, (finish_time, self.counter, packet))
-        # Incrementamos el contador para que cada paquete tenga un ID único de encolado
-        self.counter += 1
+        prioridad = packet['prioridad']
+        if prioridad in self.queues:
+            self.queues[prioridad].append(packet)
+        else:
+            self.queues[3].append(packet)  # Default sin prioridad conocida
 
     def process(self):
         processed_packets = []
-        while self.queue:
-            # 💡 La corrección: Extraemos la tupla completa
-            finish_time, counter, packet = heapq.heappop(self.queue)
-            
-            self.virtual_time = max(self.virtual_time, finish_time)
-            
-            processed_packets.append(packet)
-            
+        total_packets = sum(len(q) for q in self.queues.values())
+        
+        while len(processed_packets) < total_packets:
+            for prio in self.order:
+                weight = self.weights[prio]
+                queue = self.queues[prio]
+
+                # Procesamos 'weight' paquetes si están disponibles
+                for _ in range(weight):
+                    if queue:
+                        packet = queue.popleft()
+                        processed_packets.append(packet)
+
         return processed_packets
