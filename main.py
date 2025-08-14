@@ -15,27 +15,28 @@ priority_colors = {
 
 def generar_paquetes(n):
     paquetes = []
-    for i in range(n):
+    for i in range(1, n + 1):
         prioridad = random.randint(0, 3)
-        data = priority_colors[prioridad]
+        info = priority_colors[prioridad]
         paquetes.append({
-            "id": i + 1,
+            "id": i,
             "prioridad": prioridad,
-            "etiqueta_es": data["etiqueta_es"],
-            "etiqueta_en": data["etiqueta_en"],
-            "color": data["color"]
+            "etiqueta_es": info["etiqueta_es"],
+            "etiqueta_en": info["etiqueta_en"],
+            "color": info["color"]
         })
     return paquetes
+
 
 def mostrar_paquetes_tabla(paquetes, titulo, icono, idioma):
     st.subheader(f"{icono} {titulo}")
     if not paquetes:
-        st.write("No hay paquetes para mostrar." if idioma=="es" else "No packets to show.")
+        st.write("No hay paquetes para mostrar." if idioma == "es" else "No packets to show.")
         return
 
     html_table = "<table style='width:100%; border-collapse: collapse;'>"
     html_table += "<thead><tr>"
-    headers = ["ID", "Prioridad (Num)", "Etiqueta", "Color"] if idioma=="es" else ["ID", "Priority (Num)", "Label", "Color"]
+    headers = ["ID", "Prioridad (Num)", "Etiqueta", "Color"] if idioma == "es" else ["ID", "Priority (Num)", "Label", "Color"]
     for col in headers:
         html_table += f"<th style='border:1px solid #ddd; padding:8px; background-color:#023047; color:white; text-align:center;'>{col}</th>"
     html_table += "</tr></thead><tbody>"
@@ -55,16 +56,16 @@ def mostrar_paquetes_tabla(paquetes, titulo, icono, idioma):
     st.markdown(html_table, unsafe_allow_html=True)
 
 def mostrar_comparacion_tabla(paquetes_orig, paquetes_proc, idioma):
-    st.subheader("🔄 " + ("Comparación con Paquetes Originales" if idioma=="es" else "Comparison with Original Packets"))
+    st.subheader("🔄 " + ("Comparación con Paquetes Originales" if idioma == "es" else "Comparison with Original Packets"))
     if not paquetes_orig or not paquetes_proc:
-        st.write("No hay datos para comparar." if idioma=="es" else "No data to compare.")
+        st.write("No hay datos para comparar." if idioma == "es" else "No data to compare.")
         return
 
     # Diccionario para búsqueda rápida de paquetes procesados por id
     proc_dict = {p['id']: p for p in paquetes_proc}
 
     html_table = "<table style='width:100%; border-collapse: collapse;'>"
-    if idioma=="es":
+    if idioma == "es":
         headers = [
             "ID Original", "Prioridad Original", "Etiqueta Original", "Color Original",
             "→",
@@ -87,8 +88,8 @@ def mostrar_comparacion_tabla(paquetes_orig, paquetes_proc, idioma):
         p = proc_dict.get(o['id'], None)
         if p is None:
             continue  # o mostrar vacío si quieres
-        etiqueta_o = o["etiqueta_es"] if idioma=="es" else o["etiqueta_en"]
-        etiqueta_p = p["etiqueta_es"] if idioma=="es" else p["etiqueta_en"]
+        etiqueta_o = o["etiqueta_es"] if idioma == "es" else o["etiqueta_en"]
+        etiqueta_p = p["etiqueta_es"] if idioma == "es" else p["etiqueta_en"]
 
         html_table += (
             "<tr style='background-color:#f9f9f9; color:#000;'>"
@@ -134,22 +135,10 @@ instructions_text = (
     "- Colors indicate packet priority (red = high, yellow = medium, green = low, light blue = no priority)."
 )
 
+# Título de la aplicación
 st.title(title_text)
 
-# Nombre destacado y enlace al inicio
-st.markdown(
-    """
-    <p style='font-size:22px; font-weight:bold; text-align:center; color:#1d4ed8;'>
-        Desarrollado por 
-        <a href='https://www.linkedin.com/in/edwin-montenegro-aguilar' target='_blank' style='color:#1d4ed8; text-decoration:none;'>
-            Edwin Montenegro Aguilar
-        </a>
-    </p>
-    <hr>
-    """,
-    unsafe_allow_html=True
-)
-
+# Instrucciones
 with st.expander("ℹ️ " + ("Instrucciones de Uso" if es else "Instructions"), expanded=True):
     st.markdown(instructions_text)
 
@@ -163,6 +152,28 @@ with st.sidebar:
     st.markdown("---")
     algoritmo = st.selectbox("Selecciona algoritmo de encolamiento" if es else "Select queueing algorithm", ["FIFO", "PQ", "WFQ", "CB-WFQ"])
     procesar = st.button("Procesar paquetes" if es else "Process packets")
+
+    # Mostrar definición del algoritmo seleccionado
+    if algoritmo == "FIFO":
+        if es:
+            st.markdown("**FIFO (First In, First Out):** Procesa paquetes en orden de llegada sin considerar prioridad.")
+        else:
+            st.markdown("**FIFO (First In, First Out):** Processes packets in the order they arrive without considering priority.")
+    elif algoritmo == "PQ":
+        if es:
+            st.markdown("**PQ (Priority Queue):** Procesa primero los paquetes de mayor prioridad, respetando el orden FIFO dentro de cada prioridad.")
+        else:
+            st.markdown("**PQ (Priority Queue):** Processes the highest priority packets first, respecting FIFO within each priority.")
+    elif algoritmo == "WFQ":
+        if es:
+            st.markdown("**WFQ (Weighted Fair Queueing):** Asigna pesos a las prioridades y procesa paquetes alternando según peso para justicia en el uso de recursos.")
+        else:
+            st.markdown("**WFQ (Weighted Fair Queueing):** Assigns weights to priorities and processes packets alternately based on weight to ensure fairness in resource usage.")
+    elif algoritmo == "CB-WFQ":
+        if es:
+            st.markdown("**CB-WFQ (Class-Based Weighted Fair Queueing):** Variante de WFQ que gestiona clases con pesos definidos para control más preciso del tráfico.")
+        else:
+            st.markdown("**CB-WFQ (Class-Based Weighted Fair Queueing):** A variant of WFQ that manages classes with defined weights for more precise traffic control.")
 
 # --- Estado y lógica ---
 if generar:
@@ -216,5 +227,4 @@ with col2:
 
         else:
             st.info("Selecciona el algoritmo y haz clic en **Procesar paquetes** para ver resultados." if es else "Select algorithm and click **Process packets** to see results.")
-
 
